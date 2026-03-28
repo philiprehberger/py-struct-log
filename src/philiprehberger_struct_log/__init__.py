@@ -6,10 +6,11 @@ import json
 import logging
 import sys
 import threading
+from contextlib import contextmanager
 from datetime import datetime, timezone
-from typing import Any
+from typing import Any, Generator
 
-__all__ = ["get_logger", "bind_context", "clear_context", "get_context", "StructHandler"]
+__all__ = ["get_logger", "bind_context", "clear_context", "get_context", "log_context", "StructHandler"]
 
 _context = threading.local()
 
@@ -37,6 +38,29 @@ def get_context() -> dict[str, Any]:
     if not hasattr(_context, "data"):
         return {}
     return dict(_context.data)
+
+
+@contextmanager
+def log_context(**kwargs: Any) -> Generator[None, None, None]:
+    """Context manager for nested scoped context.
+
+    On enter, saves the current context and merges ``kwargs`` into it.
+    On exit, restores the previous context.
+
+    Example::
+
+        with log_context(request_id="abc"):
+            logger.info("handling")  # includes request_id
+            with log_context(user_id="123"):
+                logger.info("auth")  # includes request_id AND user_id
+            logger.info("done")  # only request_id
+    """
+    previous = get_context()
+    bind_context(**kwargs)
+    try:
+        yield
+    finally:
+        _context.data = previous
 
 
 class StructHandler(logging.Handler):
