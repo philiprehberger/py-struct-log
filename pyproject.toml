@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "philiprehberger-struct-log"
-version = "0.2.0"
+version = "0.2.1"
 description = "Structured JSON logging with automatic context propagation."
 readme = "README.md"
 license = "MIT"
